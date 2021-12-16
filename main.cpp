@@ -158,6 +158,11 @@ private:
       extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
+    std::cout << "Required extensions (" << extensions.size() << "):\n";
+    for (const auto& extension : extensions) {
+      std::cout << '\t' <<  extension << "\n";
+    }
+
     return extensions;
   }
 

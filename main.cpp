@@ -20,19 +20,27 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
+/**
+ * Wrapper around vkCreateDebugUtilsMessengerEXT for registering a debug callback
+ * NOTE that pAllocator is assumed to be NULL
+ */
+VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, VkDebugUtilsMessengerEXT* pDebugMessenger) {
   auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
   if (func != nullptr) {
-    return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+    return func(instance, pCreateInfo, nullptr, pDebugMessenger);
   } else {
     return VK_ERROR_EXTENSION_NOT_PRESENT;
   }
 }
 
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
+/**
+ * Wrapper around vkDestroyDebugUtilsMessengerEXT for destroying a debug callback
+ * NOTE that pAllocator is assumed to be NULL
+ */
+void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger) {
   auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
   if (func != nullptr) {
-    func(instance, debugMessenger, pAllocator);
+    func(instance, debugMessenger, nullptr);
   }
 }
 
@@ -72,13 +80,14 @@ private:
 
   void cleanup() {
     if (enableValidationLayers) {
-      DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+      // NOTE that if the following line is commented out, then the validation layers
+      // will complain on the debug callback not being destroyed properly before the
+      // instance is destroyed.
+      DestroyDebugUtilsMessengerEXT(instance, debugMessenger);
     }
 
     vkDestroyInstance(instance, nullptr);
-
     glfwDestroyWindow(window);
-
     glfwTerminate();
   }
 
@@ -133,7 +142,7 @@ private:
     VkDebugUtilsMessengerCreateInfoEXT createInfo;
     populateDebugMessengerCreateInfo(createInfo);
 
-    if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+    if (CreateDebugUtilsMessengerEXT(instance, &createInfo, &debugMessenger) != VK_SUCCESS) {
       throw std::runtime_error("failed to set up debug messenger!");
     }
   }

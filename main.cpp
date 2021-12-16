@@ -20,6 +20,11 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
+// TODO I get the following errors from the validation layers:
+// validation layer: /usr/lib/i386-linux-gnu/libvulkan_radeon.so: wrong ELF class: ELFCLASS32
+// validation layer: /usr/lib/i386-linux-gnu/libvulkan_intel.so: wrong ELF class: ELFCLASS32
+// validation layer: /usr/lib/i386-linux-gnu/libvulkan_lvp.so: wrong ELF class: ELFCLASS32
+
 /**
  * Wrapper around vkCreateDebugUtilsMessengerEXT for registering a debug callback
  * NOTE that pAllocator is assumed to be NULL

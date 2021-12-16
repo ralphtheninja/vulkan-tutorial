@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstring>
 #include <cstdlib>
+#include <optional>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -67,6 +68,16 @@ bool isDeviceSuitable (VkPhysicalDevice device) {
 
   // We pick the first we found which should be enough for this tutorial
   return true;
+}
+
+struct QueueFamilyIndices {
+  std::optional<uint32_t> graphicsFamily;
+};
+
+QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device) {
+  QueueFamilyIndices indices;
+  // Assign index to queue families that could be found
+  return indices;
 }
 
 class HelloTriangleApplication {

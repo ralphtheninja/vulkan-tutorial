@@ -49,6 +49,7 @@ public:
   void run() {
     initWindow();
     initVulkan();
+    printAvaiableInstanceExtensions();
     mainLoop();
     cleanup();
   }
@@ -189,6 +190,18 @@ private:
     }
 
     return true;
+  }
+
+  void printAvaiableInstanceExtensions () {
+    uint32_t size = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &size, nullptr);
+    std::vector<VkExtensionProperties> extensions(size);
+
+    vkEnumerateInstanceExtensionProperties(nullptr, &size, extensions.data());
+    std::cout << "Available instance extensions (" << extensions.size() << "):\n";
+    for (const auto& extension : extensions) {
+      std::cout << '\t' << extension.extensionName << '\n';
+    }
   }
 
   static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {

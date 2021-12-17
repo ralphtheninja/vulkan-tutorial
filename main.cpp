@@ -52,6 +52,10 @@ void DestroyDebugUtilsMessengerEXT (VkInstance instance, VkDebugUtilsMessengerEX
 
 struct QueueFamilyIndices {
   std::optional<uint32_t> graphicsFamily;
+
+  bool isComplete () {
+    return graphicsFamily.has_value();
+  }
 };
 
 /**
@@ -78,6 +82,11 @@ QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device) {
       std::cout << "\tMinimum granularity height: " << queueFamily.minImageTransferGranularity.height << "\n";
       std::cout << "\tMinimum granularity depth: " << queueFamily.minImageTransferGranularity.depth << "\n";
     }
+
+    if (indices.isComplete()) {
+      break;
+    }
+
     i++;
   }
 

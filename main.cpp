@@ -93,6 +93,10 @@ private:
   VkDevice device;
   VkQueue graphicsQueue;
   VkQueue presentQueue;
+  VkSwapchainKHR swapChain;
+  std::vector<VkImage> swapChainImages;
+  VkFormat swapChainImageFormat;
+  VkExtent2D swapChainExtent;
 
   void initWindow () {
     glfwInit();
@@ -108,12 +112,27 @@ private:
     createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
+    createSwapChain();
   }
 
   void testCode () {
-    //std::cout << std::boolalpha << "foo " << false << std::endl;
-    //std::cout << std::noboolalpha << "bar " << true << std::endl;
-    //std::cout << "foo2 " << false << std::endl;
+    // Trying out std::boolalpha formatting
+    // std::cout << std::boolalpha << "foo " << false << std::endl;
+    // std::cout << std::noboolalpha << "bar " << true << std::endl;
+    // std::cout << "foo2 " << false << std::endl;
+
+    // You can compare optionals without needing to do .value()
+    // std::optional<uint32_t> a;
+    // std::optional<uint32_t> b;
+
+    // a = 1;
+    // b = 0;
+
+    // if (a == b) {
+    //   std::cout << "yes, equal\n";
+    // } else {
+    //   std::cout << "not equal\n";
+    // }
   }
 
   void mainLoop () {
@@ -130,6 +149,7 @@ private:
       DestroyDebugUtilsMessengerEXT(instance, debugMessenger);
     }
 
+    vkDestroySwapchainKHR(device, swapChain, nullptr);
     vkDestroyDevice(device, nullptr);
     vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
@@ -277,6 +297,76 @@ private:
 
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+  }
+
+  /**
+   *
+   */
+  void createSwapChain () {
+    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
+
+    VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+    VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+    VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+
+    // NOTE it's recommended to add one extra image than the minimum to avoid waiting on the driver to complete
+    // internal operations before we can acquire another image to render to
+    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+
+    // swapChainSupport.capabilities.maxImageCount == 0 means there is no maximum
+    if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
+      imageCount = swapChainSupport.capabilities.maxImageCount;
+    }
+
+    VkSwapchainCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    createInfo.surface = surface;
+    createInfo.minImageCount = imageCount;
+    createInfo.imageFormat = surfaceFormat.format;
+    createInfo.imageColorSpace = surfaceFormat.colorSpace;
+    createInfo.imageExtent = extent;
+
+    // Always 1, unless stereoscopic 3D application
+    createInfo.imageArrayLayers = 1;
+
+    // Render directly to the images, use VK_IMAGE_USAGE_TRANSFER_DST_BIT for rendering to a separate image for
+    // doing e.g. post-processing
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+
+    if (indices.graphicsFamily != indices.presentFamily) {
+      createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+      createInfo.queueFamilyIndexCount = 2;
+      createInfo.pQueueFamilyIndices = queueFamilyIndices;
+    } else {
+      createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+      createInfo.queueFamilyIndexCount = 0; // Optional
+      createInfo.pQueueFamilyIndices = nullptr; // Optional
+    }
+
+    // Pick other transforms for e.g. flipping image 90 degrees etc
+    createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+    // Ignore the alpha channel, we don't want to blend with other windows in the window system
+    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.presentMode = presentMode;
+    createInfo.clipped = VK_TRUE;
+
+    // This needs to be changed once we invalidate the swap chain by e.g. resizing the window, more later
+    createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+    if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create swap chain!");
+    }
+
+    // Get handles to the images
+    vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+    swapChainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+
+    swapChainImageFormat = surfaceFormat.format;
+    swapChainExtent = extent;
   }
 
   std::vector<const char*> getRequiredExtensions () {

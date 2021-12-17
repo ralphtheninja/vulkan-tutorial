@@ -248,8 +248,10 @@ private:
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.pEnabledFeatures = &deviceFeatures;
-    // No device specific extensions are needed for now.
-    createInfo.enabledExtensionCount = 0;
+
+    // Enable device extensions
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
     if (enableValidationLayers) {
       // NOTE this is no longer necessary for modern vulkan implementations since validation layers

@@ -30,7 +30,7 @@ const bool enableValidationLayers = true;
  * Wrapper around vkCreateDebugUtilsMessengerEXT for registering a debug callback
  * NOTE that pAllocator is assumed to be NULL
  */
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, VkDebugUtilsMessengerEXT* pDebugMessenger) {
+VkResult CreateDebugUtilsMessengerEXT (VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, VkDebugUtilsMessengerEXT* pDebugMessenger) {
   auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
   if (func != nullptr) {
     return func(instance, pCreateInfo, nullptr, pDebugMessenger);
@@ -43,7 +43,7 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMes
  * Wrapper around vkDestroyDebugUtilsMessengerEXT for destroying a debug callback
  * NOTE that pAllocator is assumed to be NULL
  */
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger) {
+void DestroyDebugUtilsMessengerEXT (VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger) {
   auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
   if (func != nullptr) {
     func(instance, debugMessenger, nullptr);
@@ -82,10 +82,11 @@ QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device) {
 
 class HelloTriangleApplication {
 public:
-  void run() {
+  void run () {
     initWindow();
     initVulkan();
     printAvaiableInstanceExtensions();
+    testCode();
     mainLoop();
     cleanup();
   }
@@ -97,7 +98,7 @@ private:
   VkDebugUtilsMessengerEXT debugMessenger;
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
-  void initWindow() {
+  void initWindow () {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -105,19 +106,25 @@ private:
     window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
   }
 
-  void initVulkan() {
+  void initVulkan () {
     createInstance();
     setupDebugMessenger();
     pickPhysicalDevice();
   }
 
-  void mainLoop() {
+  void testCode () {
+    //std::cout << std::boolalpha << "foo " << false << std::endl;
+    //std::cout << std::noboolalpha << "bar " << true << std::endl;
+    //std::cout << "foo2 " << false << std::endl;
+  }
+
+  void mainLoop () {
     while (!glfwWindowShouldClose(window)) {
       glfwPollEvents();
     }
   }
 
-  void cleanup() {
+  void cleanup () {
     if (enableValidationLayers) {
       // NOTE that if the following line is commented out, then the validation layers
       // will complain on the debug callback not being destroyed properly before the
@@ -130,7 +137,7 @@ private:
     glfwTerminate();
   }
 
-  void createInstance() {
+  void createInstance () {
     if (enableValidationLayers && !checkValidationLayerSupport()) {
       throw std::runtime_error("validation layers requested, but not available!");
     }
@@ -167,7 +174,7 @@ private:
     }
   }
 
-  void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+  void populateDebugMessengerCreateInfo (VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -175,7 +182,7 @@ private:
     createInfo.pfnUserCallback = debugCallback;
   }
 
-  void setupDebugMessenger() {
+  void setupDebugMessenger () {
     if (!enableValidationLayers) return;
 
     VkDebugUtilsMessengerCreateInfoEXT createInfo;
@@ -208,7 +215,7 @@ private:
     }
   }
 
-  std::vector<const char*> getRequiredExtensions() {
+  std::vector<const char*> getRequiredExtensions () {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions;
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -227,7 +234,7 @@ private:
     return extensions;
   }
 
-  bool checkValidationLayerSupport() {
+  bool checkValidationLayerSupport () {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
@@ -264,7 +271,7 @@ private:
     }
   }
 
-  static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+  static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
     std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
     return VK_FALSE;
   }

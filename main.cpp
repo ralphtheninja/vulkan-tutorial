@@ -131,6 +131,7 @@ private:
 
   VkInstance instance;
   VkDebugUtilsMessengerEXT debugMessenger;
+  VkSurfaceKHR surface;
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
   VkDevice device;
   VkQueue graphicsQueue;
@@ -146,6 +147,7 @@ private:
   void initVulkan () {
     createInstance();
     setupDebugMessenger();
+    createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
   }
@@ -171,6 +173,7 @@ private:
     }
 
     vkDestroyDevice(device, nullptr);
+    vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -229,6 +232,15 @@ private:
 
     if (CreateDebugUtilsMessengerEXT(instance, &createInfo, &debugMessenger) != VK_SUCCESS) {
       throw std::runtime_error("failed to set up debug messenger!");
+    }
+  }
+
+  /**
+   * Create a surface object so we can interact with the window (platform independent)
+   */
+  void createSurface () {
+    if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create window surface");
     }
   }
 

@@ -50,6 +50,40 @@ void DestroyDebugUtilsMessengerEXT (VkInstance instance, VkDebugUtilsMessengerEX
   }
 }
 
+struct QueueFamilyIndices {
+  std::optional<uint32_t> graphicsFamily;
+};
+
+/**
+ * Find queue families for a device.
+ */
+QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device) {
+  QueueFamilyIndices indices;
+
+  uint32_t queueFamilyCount = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+  std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+  std::cout << "Number of queue families found: " << queueFamilies.size() << "\n";
+
+  int i = 0;
+  for (const auto& queueFamily : queueFamilies) {
+    if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+      indices.graphicsFamily = i;
+      std::cout << "Found queue family with VK_QUEUE_GRAPHICS_BIT set\n";
+      std::cout << "\tNumber of queues: " << queueFamily.queueCount << "\n";
+      std::cout << "\tMinimum granularity width: " << queueFamily.minImageTransferGranularity.width << "\n";
+      std::cout << "\tMinimum granularity height: " << queueFamily.minImageTransferGranularity.height << "\n";
+      std::cout << "\tMinimum granularity depth: " << queueFamily.minImageTransferGranularity.depth << "\n";
+    }
+    i++;
+  }
+
+  return indices;
+}
+
 bool isDeviceSuitable (VkPhysicalDevice device) {
   // Example code of picking a device based on some device properties and device features
   // This fails on my machine!
@@ -66,18 +100,8 @@ bool isDeviceSuitable (VkPhysicalDevice device) {
   // giving a score and sorting the devices according to that score and picking
   // the one with the highest score etc.
 
-  // We pick the first we found which should be enough for this tutorial
-  return true;
-}
-
-struct QueueFamilyIndices {
-  std::optional<uint32_t> graphicsFamily;
-};
-
-QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device) {
-  QueueFamilyIndices indices;
-  // Assign index to queue families that could be found
-  return indices;
+  QueueFamilyIndices indices = findQueueFamilies(device);
+  return indices.graphicsFamily.has_value();
 }
 
 class HelloTriangleApplication {

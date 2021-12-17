@@ -167,6 +167,7 @@ private:
       DestroyDebugUtilsMessengerEXT(instance, debugMessenger);
     }
 
+    vkDestroyDevice(device, nullptr);
     vkDestroyInstance(instance, nullptr);
     glfwDestroyWindow(window);
     glfwTerminate();

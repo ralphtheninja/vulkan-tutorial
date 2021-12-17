@@ -61,7 +61,7 @@ struct QueueFamilyIndices {
 /**
  * Find queue families for a device.
  */
-QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device) {
+QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device, bool debug = false) {
   QueueFamilyIndices indices;
 
   uint32_t queueFamilyCount = 0;
@@ -76,11 +76,13 @@ QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device) {
   for (const auto& queueFamily : queueFamilies) {
     if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
       indices.graphicsFamily = i;
-      std::cout << "Found queue family with VK_QUEUE_GRAPHICS_BIT set\n";
-      std::cout << "\tNumber of queues: " << queueFamily.queueCount << "\n";
-      std::cout << "\tMinimum granularity width: " << queueFamily.minImageTransferGranularity.width << "\n";
-      std::cout << "\tMinimum granularity height: " << queueFamily.minImageTransferGranularity.height << "\n";
-      std::cout << "\tMinimum granularity depth: " << queueFamily.minImageTransferGranularity.depth << "\n";
+      if (debug) {
+        std::cout << "Found queue family with VK_QUEUE_GRAPHICS_BIT set\n";
+        std::cout << "\tNumber of queues: " << queueFamily.queueCount << "\n";
+        std::cout << "\tMinimum granularity width: " << queueFamily.minImageTransferGranularity.width << "\n";
+        std::cout << "\tMinimum granularity height: " << queueFamily.minImageTransferGranularity.height << "\n";
+        std::cout << "\tMinimum granularity depth: " << queueFamily.minImageTransferGranularity.depth << "\n";
+      }
     }
 
     if (indices.isComplete()) {
@@ -109,7 +111,7 @@ bool isDeviceSuitable (VkPhysicalDevice device) {
   // giving a score and sorting the devices according to that score and picking
   // the one with the highest score etc.
 
-  QueueFamilyIndices indices = findQueueFamilies(device);
+  QueueFamilyIndices indices = findQueueFamilies(device, true);
   return indices.graphicsFamily.has_value();
 }
 

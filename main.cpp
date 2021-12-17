@@ -59,7 +59,7 @@ struct QueueFamilyIndices {
   std::optional<uint32_t> graphicsFamily;
   std::optional<uint32_t> presentFamily;
 
-  bool isComplete () {
+  bool isComplete () const {
     return graphicsFamily.has_value() && presentFamily.has_value();
   }
 };
@@ -331,8 +331,11 @@ private:
     // giving a score and sorting the devices according to that score and picking
     // the one with the highest score etc.
 
-    QueueFamilyIndices indices = findQueueFamilies(device, true);
-    return indices.isComplete() && checkDeviceExtensionSupport(device);
+    const QueueFamilyIndices indices = findQueueFamilies(device, true);
+
+    const bool extensionsSupported = checkDeviceExtensionSupport(device);
+
+    return indices.isComplete() && extensionsSupported;
   }
 
   bool checkDeviceExtensionSupport (VkPhysicalDevice device) {

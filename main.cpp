@@ -349,6 +349,12 @@ private:
         }
       }
 
+      VkBool32 presentSupport = false;
+      vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+      if (presentSupport) {
+        indices.presentFamily = i;
+      }
+
       if (indices.isComplete()) {
         break;
       }

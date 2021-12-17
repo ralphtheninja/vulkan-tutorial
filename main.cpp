@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <optional>
 #include <set>
+#include <cstdint> // For UINT32_MAX
+#include <algorithm> // For std::clamp
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -387,6 +389,59 @@ private:
     }
 
     return details;
+  }
+
+  /**
+   * Things related to color depth
+   * https://vulkan-tutorial.com/en/Drawing_a_triangle/Presentation/Swap_chain#page_Surface-format
+   */
+  VkSurfaceFormatKHR chooseSwapSurfaceFormat (const std::vector<VkSurfaceFormatKHR>& availableFormats) {
+    for (const auto& availableFormat : availableFormats) {
+      if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+        return availableFormat;
+      }
+    }
+
+    // NOTE here we could rank the available formats according to how good they are,
+    // but in most cases it's ok to return the first one.
+
+    return availableFormats[0];
+  }
+
+  /**
+   * Possible values are:
+   * - VK_PRESENT_MODE_IMMEDIATE_KHR
+   * - VK_PRESENT_MODE_FIFO_KHR
+   * - VK_PRESENT_MODE_FIFO_RELAXED_KHR
+   * - VK_PRESENT_MODE_MAILBOX_KHR
+   * https://vulkan-tutorial.com/en/Drawing_a_triangle/Presentation/Swap_chain#page_Presentation-mode
+   */
+  VkPresentModeKHR chooseSwapPresentMode (const std::vector<VkPresentModeKHR>& availablePresentModes) {
+    for (const auto& availablePresentMode : availablePresentModes) {
+      if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+        return availablePresentMode;
+      }
+    }
+    return VK_PRESENT_MODE_FIFO_KHR;
+  }
+
+  /**
+   * https://vulkan-tutorial.com/en/Drawing_a_triangle/Presentation/Swap_chain#page_Swap-extent
+   */
+  VkExtent2D chooseSwapExtent (const VkSurfaceCapabilitiesKHR& capabilities) {
+    if (capabilities.currentExtent.width != UINT32_MAX) {
+      return capabilities.currentExtent;
+    } else {
+      int width, height;
+      glfwGetFramebufferSize(window, &width, &height);
+
+      VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+
+      actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+      actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+      return actualExtent;
+    }
   }
 
   /**

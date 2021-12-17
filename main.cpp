@@ -112,7 +112,7 @@ bool isDeviceSuitable (VkPhysicalDevice device) {
   // the one with the highest score etc.
 
   QueueFamilyIndices indices = findQueueFamilies(device, true);
-  return indices.graphicsFamily.has_value();
+  return indices.isComplete();
 }
 
 class HelloTriangleApplication {

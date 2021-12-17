@@ -130,6 +130,7 @@ private:
   VkInstance instance;
   VkDebugUtilsMessengerEXT debugMessenger;
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+  VkDevice device;
 
   void initWindow () {
     glfwInit();
@@ -143,6 +144,7 @@ private:
     createInstance();
     setupDebugMessenger();
     pickPhysicalDevice();
+    createLogicalDevice();
   }
 
   void testCode () {
@@ -226,6 +228,10 @@ private:
     }
   }
 
+  /**
+   * A physical device can have different properties. We pick the first one with
+   * the VK_QUEUE_GRAPHICS_BIT set.
+   */
   void pickPhysicalDevice () {
     uint32_t count = 0;
     vkEnumeratePhysicalDevices(instance, &count, nullptr);
@@ -245,6 +251,48 @@ private:
 
     if (physicalDevice == VK_NULL_HANDLE) {
       throw std::runtime_error("failed to find suitable GPU");
+    }
+  }
+
+  /**
+   * A logical device interfaces with the physical device
+   */
+  void createLogicalDevice () {
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+    VkDeviceQueueCreateInfo queueCreateInfo{};
+    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+    queueCreateInfo.queueCount = 1;
+
+    float queuePriority = 1.0f;
+    queueCreateInfo.pQueuePriorities = &queuePriority;
+
+    // Leaving this empty for now. Getting back to this later.
+    VkPhysicalDeviceFeatures deviceFeatures{};
+
+    VkDeviceCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    // NOTE that we can provide an array of VkDeviceQueuecreateinfo here if we wanted to create
+    // more than one queue family for this logical device.
+    createInfo.pQueueCreateInfos = &queueCreateInfo;
+    createInfo.queueCreateInfoCount = 1;
+    createInfo.pEnabledFeatures = &deviceFeatures;
+    // No device specific extensions are needed for now.
+    createInfo.enabledExtensionCount = 0;
+
+    if (enableValidationLayers) {
+      // NOTE this is no longer necessary for modern vulkan implementations since validation layers
+      // are no longer separate for instances and devices. (since when?).
+      // This is only to be compatible with older implementations.
+      createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+      createInfo.ppEnabledLayerNames = validationLayers.data();
+    } else {
+      createInfo.enabledLayerCount = 0;
+    }
+
+    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create logical device");
     }
   }
 

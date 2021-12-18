@@ -98,7 +98,6 @@ public:
     initWindow();
     initVulkan();
     printAvaiableInstanceExtensions();
-    testCode();
     mainLoop();
     cleanup();
   }
@@ -120,6 +119,7 @@ private:
   std::vector<VkImageView> swapChainImageViews;
   VkRenderPass renderPass;
   VkPipelineLayout pipelineLayout;
+  VkPipeline graphicsPipeline;
 
   void initWindow () {
     glfwInit();
@@ -141,26 +141,6 @@ private:
     createGraphicsPipeline();
   }
 
-  void testCode () {
-    // Trying out std::boolalpha formatting
-    // std::cout << std::boolalpha << "foo " << false << std::endl;
-    // std::cout << std::noboolalpha << "bar " << true << std::endl;
-    // std::cout << "foo2 " << false << std::endl;
-
-    // You can compare optionals without needing to do .value()
-    // std::optional<uint32_t> a;
-    // std::optional<uint32_t> b;
-
-    // a = 1;
-    // b = 0;
-
-    // if (a == b) {
-    //   std::cout << "yes, equal\n";
-    // } else {
-    //   std::cout << "not equal\n";
-    // }
-  }
-
   void mainLoop () {
     while (!glfwWindowShouldClose(window)) {
       glfwPollEvents();
@@ -168,13 +148,11 @@ private:
   }
 
   void cleanup () {
+    vkDestroyPipeline(device, graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
-    
+
     if (enableValidationLayers) {
-      // NOTE that if the following line is commented out, then the validation layers
-      // will complain on the debug callback not being destroyed properly before the
-      // instance is destroyed.
       DestroyDebugUtilsMessengerEXT(instance, debugMessenger);
     }
 
@@ -496,10 +474,8 @@ private:
 
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
-    // TODO use shaderStages while creating the pipeline
-
-    // We're hardcoding the vertex data to start with so this is empty for now
     // https://vulkan-tutorial.com/en/Drawing_a_triangle/Graphics_pipeline_basics/Fixed_functions#page_Vertex-input
+    // We're hardcoding the vertex data to start with so this is empty for now
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 0;
@@ -590,6 +566,29 @@ private:
 
     if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
       throw std::runtime_error("failed to create pipeline layout!");
+    }
+
+    // https://vulkan-tutorial.com/en/Drawing_a_triangle/Graphics_pipeline_basics/Conclusion
+    VkGraphicsPipelineCreateInfo pipelineInfo{};
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineInfo.stageCount = 2;
+    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.pVertexInputState = &vertexInputInfo;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    pipelineInfo.pViewportState = &viewportState;
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState = &multisampling;
+    pipelineInfo.pDepthStencilState = nullptr; // Optional
+    pipelineInfo.pColorBlendState = &colorBlending;
+    pipelineInfo.pDynamicState = nullptr; // Optional
+    pipelineInfo.layout = pipelineLayout;
+    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.subpass = 0;
+    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+    pipelineInfo.basePipelineIndex = -1; // Optional
+
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create graphics pipeline!");
     }
 
     vkDestroyShaderModule(device, fragShaderModule, nullptr);

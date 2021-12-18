@@ -270,6 +270,7 @@ private:
       VkDeviceQueueCreateInfo queueCreateInfo{};
       queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
       queueCreateInfo.queueFamilyIndex = queueFamily;
+      queueCreateInfo.queueCount = 1;
       queueCreateInfo.pQueuePriorities = &queuePriority;
       queueCreateInfos.push_back(queueCreateInfo);
     }

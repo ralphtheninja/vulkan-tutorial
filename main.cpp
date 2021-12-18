@@ -124,8 +124,10 @@ private:
   std::vector<VkFramebuffer> swapChainFramebuffers;
   VkCommandPool commandPool;
   std::vector<VkCommandBuffer> commandBuffers;
+  // The semaphores are for GPU-GPU synchronization
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
+  // The fences are for CPU-GPU synchronization
   std::vector<VkFence> inFlightFences;
   // TODO wth? didn't follow this one
   std::vector<VkFence> imagesInFlight;

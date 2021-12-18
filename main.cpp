@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <optional>
 #include <set>
+#include <fstream>
 #include <cstdint> // For UINT32_MAX
 #include <algorithm> // For std::clamp
 
@@ -32,6 +33,25 @@ const bool enableValidationLayers = true;
 // validation layer: /usr/lib/i386-linux-gnu/libvulkan_radeon.so: wrong ELF class: ELFCLASS32
 // validation layer: /usr/lib/i386-linux-gnu/libvulkan_intel.so: wrong ELF class: ELFCLASS32
 // validation layer: /usr/lib/i386-linux-gnu/libvulkan_lvp.so: wrong ELF class: ELFCLASS32
+
+/**
+ * For reading in shaders
+ */
+static std::vector<char> readFile (const std::string& filename) {
+  std::ifstream file(filename, std::ios::ate | std::ios::binary);
+  if (!file.is_open()) {
+    throw std::runtime_error("failed to open file!");
+  }
+
+  size_t fileSize = (size_t)file.tellg();
+  std::vector<char> buffer(fileSize);
+
+  file.seekg(0);
+  file.read(buffer.data(), fileSize);
+  file.close();
+
+  return buffer;
+}
 
 /**
  * Wrapper around vkCreateDebugUtilsMessengerEXT for registering a debug callback
@@ -115,6 +135,7 @@ private:
     createLogicalDevice();
     createSwapChain();
     createImageViews();
+    createGraphicsPipeline();
   }
 
   void testCode () {
@@ -403,6 +424,53 @@ private:
         throw std::runtime_error("failed to create image views!");
       }
     }
+  }
+
+  void createGraphicsPipeline () {
+    auto vertShaderCode = readFile("shaders/vert.spv");
+    auto fragShaderCode = readFile("shaders/frag.spv");
+
+    VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+    VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+
+    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertShaderStageInfo.module = vertShaderModule;
+    // There can be multiple entry points, so you can have one shader module with
+    // different entry points for different behaviors!
+    vertShaderStageInfo.pName = "main";
+    // Can be used to set constants to configure behaviour, kind of like #ifdef in c
+    // This is more efficient than providing values during render since code can be
+    // optimized. Not used at the moment.
+    vertShaderStageInfo.pSpecializationInfo = nullptr;
+
+    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragShaderStageInfo.module = fragShaderModule;
+    fragShaderStageInfo.pName = "main";
+
+    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+    // TODO use shaderStages while creating the pipeline
+
+    vkDestroyShaderModule(device, fragShaderModule, nullptr);
+    vkDestroyShaderModule(device, vertShaderModule, nullptr);
+  }
+
+  VkShaderModule createShaderModule (const std::vector<char>& code) {
+    VkShaderModuleCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = code.size();
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+    VkShaderModule shaderModule;
+    if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create shader module!");
+    }
+
+    return shaderModule;
   }
 
   std::vector<const char*> getRequiredExtensions () {

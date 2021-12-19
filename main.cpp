@@ -417,7 +417,9 @@ private:
     vkGetSwapchainImagesKHR(device_, swapChain_, &imageCount, swapChainImages_.data());
 
     swapChainImageFormat_ = surfaceFormat.format;
+    std::cout << " swapChainImageFormat_: " << swapChainImageFormat_ << '\n';
     swapChainExtent_ = extent;
+    std::cout << " swapChainExtent_: (" << swapChainExtent_.width << ',' << swapChainExtent_.height << ")\n";
   }
 
   void createImageViews () {

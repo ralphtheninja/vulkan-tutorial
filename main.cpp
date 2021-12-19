@@ -30,11 +30,6 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
-// TODO I get the following errors from the validation layers:
-// validation layer: /usr/lib/i386-linux-gnu/libvulkan_radeon.so: wrong ELF class: ELFCLASS32
-// validation layer: /usr/lib/i386-linux-gnu/libvulkan_intel.so: wrong ELF class: ELFCLASS32
-// validation layer: /usr/lib/i386-linux-gnu/libvulkan_lvp.so: wrong ELF class: ELFCLASS32
-
 /**
  * For reading in shaders
  */
@@ -56,7 +51,6 @@ static std::vector<char> readFile (const std::string& filename) {
 
 /**
  * Wrapper around vkCreateDebugUtilsMessengerEXT for registering a debug callback
- * NOTE that pAllocator is assumed to be NULL
  */
 VkResult CreateDebugUtilsMessengerEXT (VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, VkDebugUtilsMessengerEXT* pDebugMessenger) {
   auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
@@ -69,7 +63,6 @@ VkResult CreateDebugUtilsMessengerEXT (VkInstance instance, const VkDebugUtilsMe
 
 /**
  * Wrapper around vkDestroyDebugUtilsMessengerEXT for destroying a debug callback
- * NOTE that pAllocator is assumed to be NULL
  */
 void DestroyDebugUtilsMessengerEXT (VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger) {
   auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
@@ -232,16 +225,16 @@ private:
     vkDestroyPipelineLayout(device_, pipelineLayout_, nullptr);
     vkDestroyRenderPass(device_, renderPass_, nullptr);
 
-    if (enableValidationLayers) {
-      DestroyDebugUtilsMessengerEXT(instance_, debugMessenger_);
-    }
-
     for (auto imageView : swapChainImageViews_) {
       vkDestroyImageView(device_, imageView, nullptr);
     }
 
     vkDestroySwapchainKHR(device_, swapChain_, nullptr);
     vkDestroyDevice(device_, nullptr);
+
+    if (enableValidationLayers) {
+      DestroyDebugUtilsMessengerEXT(instance_, debugMessenger_);
+    }
 
     vkDestroySurfaceKHR(instance_, surface_, nullptr);
     vkDestroyInstance(instance_, nullptr);
@@ -287,14 +280,6 @@ private:
     }
   }
 
-  void populateDebugMessengerCreateInfo (VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
-    createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    createInfo.pfnUserCallback = debugCallback;
-  }
-
   void setupDebugMessenger () {
     if (!enableValidationLayers) return;
 
@@ -304,6 +289,19 @@ private:
     if (CreateDebugUtilsMessengerEXT(instance_, &createInfo, &debugMessenger_) != VK_SUCCESS) {
       throw std::runtime_error("failed to set up debug messenger!");
     }
+  }
+
+  void populateDebugMessengerCreateInfo (VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+    createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    createInfo.pfnUserCallback = debugCallback;
+  }
+
+  static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    return VK_FALSE;
   }
 
   /**
@@ -501,7 +499,6 @@ private:
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    // TODO what is stencil data?
     colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -516,7 +513,6 @@ private:
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
 
-    // TODO wth?
     VkSubpassDependency dependency{};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass = 0;
@@ -1028,11 +1024,6 @@ private:
     for (const auto& extension : extensions) {
       std::cout << '\t' << extension.extensionName << '\n';
     }
-  }
-
-  static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-    return VK_FALSE;
   }
 };
 

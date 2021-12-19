@@ -98,7 +98,7 @@ public:
   void run () {
     initWindow();
     initVulkan();
-    printAvaiableInstanceExtensions();
+    printAvailableInstanceExtensions();
     mainLoop();
     cleanup();
   }
@@ -1018,7 +1018,7 @@ private:
     return indices;
   }
 
-  void printAvaiableInstanceExtensions () {
+  void printAvailableInstanceExtensions () {
     uint32_t size = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &size, nullptr);
     std::vector<VkExtensionProperties> extensions(size);

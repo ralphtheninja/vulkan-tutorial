@@ -348,6 +348,7 @@ private:
    *
    */
   void createSwapChain () {
+    std::cout << "createSwapChain()\n";
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice_);
 
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -356,12 +357,16 @@ private:
 
     // NOTE it's recommended to add one extra image than the minimum to avoid waiting on the driver to complete
     // internal operations before we can acquire another image to render to
+    std::cout << " swapChainSupport.capabilities.minImageCount: " << swapChainSupport.capabilities.minImageCount << '\n';
+    std::cout << " swapChainSupport.capabilities.maxImageCount: " << swapChainSupport.capabilities.maxImageCount << '\n';
     uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 
     // swapChainSupport.capabilities.maxImageCount == 0 means there is no maximum
     if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
       imageCount = swapChainSupport.capabilities.maxImageCount;
     }
+
+    std::cout << " imageCount: " << imageCount << '\n';
 
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -408,6 +413,7 @@ private:
     // Get handles to the images (images are destroyed once the swap chain is destroyed, so no explicit cleanup is needed)
     vkGetSwapchainImagesKHR(device_, swapChain_, &imageCount, nullptr);
     swapChainImages_.resize(imageCount);
+    std::cout << " number of swap chain images (after vkGetSwapchainImagesKHR): " << imageCount << '\n';
     vkGetSwapchainImagesKHR(device_, swapChain_, &imageCount, swapChainImages_.data());
 
     swapChainImageFormat_ = surfaceFormat.format;

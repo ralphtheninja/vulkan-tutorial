@@ -2,13 +2,12 @@
 
 My code following along https://vulkan-tutorial.com/
 
-## build and test
+## usage
 
-```
-make
-make test
-```
+Build the code: `make`
 
-## dev
+Run the executable: `make test` or `./vulkantest`
 
-Run `make dev` to continuously watch the code and run `make`.
+Develop: `make dev` (watch files and recompile automatically)
+
+Debug the vulkan loader: `VK_LOADER_DEBUG=all ./vulkantest` (can replace `all` with `warn`, `error`, `info`, `perf` or `debug`)

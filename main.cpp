@@ -16,6 +16,7 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
+// "VK_LAYER_LUNARG_standard_validation" also works
 const std::vector<const char*> validationLayers = {
   "VK_LAYER_KHRONOS_validation"
 };

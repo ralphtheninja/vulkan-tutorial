@@ -865,25 +865,8 @@ private:
   }
 
   bool isDeviceSuitable (VkPhysicalDevice device) {
-    // Example code of picking a device based on some device properties and device features
-    // This fails on my machine!
-    // VkPhysicalDeviceProperties deviceProperties;
-    // vkGetPhysicalDeviceProperties(device, &deviceProperties);
-
-    // VkPhysicalDeviceFeatures deviceFeatures;
-    // vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-
-    // return (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-    //         deviceFeatures.geometryShader);
-
-    // NOTE there can be different ways to pick the device, the tutorial mentions
-    // giving a score and sorting the devices according to that score and picking
-    // the one with the highest score etc.
-
     const QueueFamilyIndices indices = findQueueFamilies(device, true);
-
     const bool extensionsSupported = checkDeviceExtensionSupport(device);
-
     bool swapChainAdequate = false;
     if (extensionsSupported) {
       SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);

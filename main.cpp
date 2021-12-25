@@ -115,11 +115,12 @@ private:
   VkFormat swapChainImageFormat_;
   VkExtent2D swapChainExtent_;
   std::vector<VkImageView> swapChainImageViews_;
-  std::vector<VkFramebuffer> swapChainFramebuffers_;
 
   VkRenderPass renderPass_;
   VkPipelineLayout pipelineLayout_;
   VkPipeline graphicsPipeline_;
+
+  std::vector<VkFramebuffer> swapChainFramebuffers_;
 
   VkCommandPool commandPool_;
   std::vector<VkCommandBuffer> commandBuffers_;

@@ -148,7 +148,7 @@ private:
     createImageViews();
     createRenderPass();
     createGraphicsPipeline();
-    createFrameBuffers();
+    createFramebuffers();
     createCommandPool();
     createCommandBuffers();
     createSyncObjects();
@@ -647,7 +647,7 @@ private:
     vkDestroyShaderModule(device_, vertShaderModule, nullptr);
   }
 
-  void createFrameBuffers () {
+  void createFramebuffers () {
     swapChainFramebuffers_.resize(swapChainImageViews_.size());
 
     for (size_t i = 0; i < swapChainImageViews_.size(); i++) {

@@ -16,6 +16,17 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
+/**
+ * TODO
+ *
+ * Resizing the window makes a lot of flickering. Why and what can we do about this?
+ *
+ * Sometimes when recreating the swap chain the validation layer complains with:
+ * "vkCreateSwapchainKHR() called with imageExtent = (1894,1237), which is outside the bounds returned by vkGetPhysicalDeviceSurfaceCapabilitiesKHR(): currentExtent = (1911,1240), minImageExtent = (1911,1240), maxImageExtent = (1911,1240). The Vulkan spec states: imageExtent must be between minImageExtent and maxImageExtent, inclusive, where minImageExtent and maxImageExtent are members of the VkSurfaceCapabilitiesKHR structure returned by vkGetPhysicalDeviceSurfaceCapabil
+ itiesKHR for the surface (https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VUID-VkSwapchainCreateInfoKHR-imageExtent-01274)"
+ * I suspect that there is some race condition going on.
+ */
+
 // "VK_LAYER_LUNARG_standard_validation" also works
 const std::vector<const char*> validationLayers = {
   "VK_LAYER_KHRONOS_validation"
@@ -131,11 +142,20 @@ private:
   std::vector<VkFence> imagesInFlight_;
   size_t currentFrame_ = 0;
 
+  bool frameBufferResized_ = false;
+
   void initWindow () {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     window_ = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+    glfwSetWindowUserPointer(window_, this);
+    glfwSetFramebufferSizeCallback(window_, frameBufferResizeCallback);
+  }
+
+  static void frameBufferResizeCallback (GLFWwindow* window, int width, int height) {
+    std::cout << "frameBufferResizeCallback(): (w,h) = (" << width << "," << height << ")\n";
+    auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+    app->frameBufferResized_ = true;
   }
 
   void initVulkan () {
@@ -164,6 +184,8 @@ private:
   }
 
   void cleanup () {
+    cleanupSwapChain();
+
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
       vkDestroySemaphore(device_, imageAvailableSemaphores_[i], nullptr);
       vkDestroySemaphore(device_, renderFinishedSemaphores_[i], nullptr);
@@ -171,20 +193,6 @@ private:
     }
 
     vkDestroyCommandPool(device_, commandPool_, nullptr);
-
-    for (auto framebuffer : swapChainFramebuffers_) {
-      vkDestroyFramebuffer(device_, framebuffer, nullptr);
-    }
-
-    vkDestroyPipeline(device_, graphicsPipeline_, nullptr);
-    vkDestroyPipelineLayout(device_, pipelineLayout_, nullptr);
-    vkDestroyRenderPass(device_, renderPass_, nullptr);
-
-    for (auto imageView : swapChainImageViews_) {
-      vkDestroyImageView(device_, imageView, nullptr);
-    }
-
-    vkDestroySwapchainKHR(device_, swapChain_, nullptr);
     vkDestroyDevice(device_, nullptr);
 
     if (enableValidationLayers) {
@@ -344,6 +352,45 @@ private:
 
     vkGetDeviceQueue(device_, indices.graphicsFamily.value(), 0, &graphicsQueue_);
     vkGetDeviceQueue(device_, indices.presentFamily.value(), 0, &presentQueue_);
+  }
+
+  /**
+   * Recreates the swap chain when the window has been resized or when the next image is out of date
+   */
+  void recreateSwapChain () {
+    std::cout << "recreateSwapChain()\n";
+    vkDeviceWaitIdle(device_);
+
+    cleanupSwapChain();
+
+    createSwapChain();
+    createImageViews();
+    createRenderPass();
+    createGraphicsPipeline();
+    createFramebuffers();
+    createCommandBuffers();
+  }
+
+  /**
+   * Clean up resources related to the swap chain
+   */
+  void cleanupSwapChain () {
+    std::cout << "cleanupSwapChain()\n";
+    for (auto framebuffer : swapChainFramebuffers_) {
+      vkDestroyFramebuffer(device_, framebuffer, nullptr);
+    }
+
+    vkFreeCommandBuffers(device_, commandPool_, static_cast<uint32_t>(commandBuffers_.size()), commandBuffers_.data());
+
+    vkDestroyPipeline(device_, graphicsPipeline_, nullptr);
+    vkDestroyPipelineLayout(device_, pipelineLayout_, nullptr);
+    vkDestroyRenderPass(device_, renderPass_, nullptr);
+
+    for (auto imageView : swapChainImageViews_) {
+      vkDestroyImageView(device_, imageView, nullptr);
+    }
+
+    vkDestroySwapchainKHR(device_, swapChain_, nullptr);
   }
 
   /**
@@ -759,7 +806,13 @@ private:
     vkWaitForFences(device_, 1, &inFlightFences_[currentFrame_], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
-    vkAcquireNextImageKHR(device_, swapChain_, UINT64_MAX, imageAvailableSemaphores_[currentFrame_], VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(device_, swapChain_, UINT64_MAX, imageAvailableSemaphores_[currentFrame_], VK_NULL_HANDLE, &imageIndex);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+      recreateSwapChain();
+      return;
+    } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+      throw std::runtime_error("failed to acquire next swap chain image!");
+    }
 
     // Check if a previous frame is using this image (i.e. there is its fence to wait on)
     if (imagesInFlight_[imageIndex] != VK_NULL_HANDLE) {
@@ -802,7 +855,13 @@ private:
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr; // Optional
 
-    vkQueuePresentKHR(presentQueue_, &presentInfo);
+    result = vkQueuePresentKHR(presentQueue_, &presentInfo);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frameBufferResized_) {
+      frameBufferResized_ = false;
+      recreateSwapChain();
+    } else if (result != VK_SUCCESS) {
+      throw std::runtime_error("failed to present swap chain image!");
+    }
 
     currentFrame_ = (currentFrame_ + 1) % MAX_FRAMES_IN_FLIGHT;
   }

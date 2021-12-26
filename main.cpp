@@ -25,6 +25,10 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
  * "vkCreateSwapchainKHR() called with imageExtent = (1894,1237), which is outside the bounds returned by vkGetPhysicalDeviceSurfaceCapabilitiesKHR(): currentExtent = (1911,1240), minImageExtent = (1911,1240), maxImageExtent = (1911,1240). The Vulkan spec states: imageExtent must be between minImageExtent and maxImageExtent, inclusive, where minImageExtent and maxImageExtent are members of the VkSurfaceCapabilitiesKHR structure returned by vkGetPhysicalDeviceSurfaceCapabil
  itiesKHR for the surface (https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VUID-VkSwapchainCreateInfoKHR-imageExtent-01274)"
  * I suspect that there is some race condition going on.
+ *
+ * Interestingly, it seems both the flickering of the screen and the validation layer warning both went away when
+ * I commented out all std::cout logging -> This should be enabled/disabled by a boolean or by a compilation flag in a
+ * real application!
  */
 
 // "VK_LAYER_LUNARG_standard_validation" also works

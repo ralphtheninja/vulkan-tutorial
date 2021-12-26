@@ -363,6 +363,14 @@ private:
    */
   void recreateSwapChain () {
     std::cout << "recreateSwapChain()\n";
+
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(window_, &width, &height);
+    while (width == 0 || height == 0) {
+      glfwGetFramebufferSize(window_, &width, &height);
+      glfwWaitEvents();
+    }
+
     vkDeviceWaitIdle(device_);
 
     cleanupSwapChain();

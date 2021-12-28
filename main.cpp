@@ -886,6 +886,7 @@ private:
 
       vkCmdBeginRenderPass(commandBuffers_[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+      {
         vkCmdBindPipeline(commandBuffers_[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline_);
 
         VkBuffer vertexBuffers[] = {vertexBuffer_};
@@ -893,6 +894,21 @@ private:
         vkCmdBindVertexBuffers(commandBuffers_[i], 0, 1, vertexBuffers, offsets);
 
         vkCmdDraw(commandBuffers_[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+      }
+
+      // TODO assuming we have triangle strips, points and line strips etc, I wonder
+      // if we need to create different graphics pipelines for each of them (at the moment
+      // we only have a single triangle drawn as a triangle strip) and then do multiple
+      // calls to vkCmdBindPipeline() like below:
+      // {
+      //   vkCmdBindPipeline(commandBuffers_[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pointsPipeline_);
+
+      //   VkBuffer vertexBuffers[] = {pointsVertexBuffer_};
+      //   VkDeviceSize pointOffsets[] = {0};
+      //   vkCmdBindVertexBuffers(commandBuffers_[i], 0, 1, vertexBuffers, offsets);
+
+      //   vkCmdDraw(commandBuffers_[i], static_cast<uint32_t>(points.size()), 1, 0, 0);
+      // }
 
       vkCmdEndRenderPass(commandBuffers_[i]);
 

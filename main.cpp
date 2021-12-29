@@ -802,7 +802,12 @@ private:
    */
   void createVertexBuffer () {
     VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-    createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBuffer_, vertexBufferMemory_);
+
+    createBuffer(bufferSize,
+                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 vertexBuffer_,
+                 vertexBufferMemory_);
 
     void* data;
     vkMapMemory(device_, vertexBufferMemory_, 0, bufferSize, 0, &data);
@@ -813,7 +818,11 @@ private:
   /**
    * Common buffer create code
    */
-  void createBuffer (VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+  void createBuffer (VkDeviceSize size,
+                     VkBufferUsageFlags usage,
+                     VkMemoryPropertyFlags properties,
+                     VkBuffer& buffer,
+                     VkDeviceMemory& bufferMemory) {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;

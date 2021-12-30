@@ -83,20 +83,13 @@ struct Vertex {
 };
 
 const std::vector<Vertex> vertices = {
-  {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-  {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-  {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+  {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+  {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+  {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+  {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 };
 
-// Two triangles
-// const std::vector<Vertex> vertices = {
-//   {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-//   {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-//   {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-//   {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-//   {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-//   {{-0.75f, -0.5f}, {1.0f, 0.0f, 1.0f}},
-// };
+const std::vector<uint16_t> indices = { 0, 1, 2, 2, 3, 0 };
 
 /**
  * For reading in shaders
@@ -191,6 +184,8 @@ private:
 
   VkBuffer vertexBuffer_;
   VkDeviceMemory vertexBufferMemory_;
+  VkBuffer indexBuffer_;
+  VkDeviceMemory indexBufferMemory_;
 
   VkCommandPool commandPool_;
   std::vector<VkCommandBuffer> commandBuffers_;
@@ -230,6 +225,7 @@ private:
     createFramebuffers();
     createCommandPool();
     createVertexBuffer();
+    createIndexBuffer();
     createCommandBuffers();
     createSyncObjects();
   }
@@ -246,6 +242,8 @@ private:
   void cleanup () {
     cleanupSwapChain();
 
+    vkDestroyBuffer(device_, indexBuffer_, nullptr);
+    vkFreeMemory(device_, indexBufferMemory_, nullptr);
     vkDestroyBuffer(device_, vertexBuffer_, nullptr);
     vkFreeMemory(device_, vertexBufferMemory_, nullptr);
 
@@ -839,6 +837,37 @@ private:
   }
 
   /**
+   * Index buffer for two triangles
+   */
+  void createIndexBuffer () {
+    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    createBuffer(bufferSize,
+                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 stagingBuffer,
+                 stagingBufferMemory);
+
+    void* data;
+    vkMapMemory(device_, stagingBufferMemory, 0, bufferSize, 0, &data);
+      memcpy(data, indices.data(), (size_t) bufferSize);
+    vkUnmapMemory(device_, stagingBufferMemory);
+
+    createBuffer(bufferSize,
+                 VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                 indexBuffer_,
+                 indexBufferMemory_);
+
+    copyBuffer(stagingBuffer, indexBuffer_, bufferSize);
+
+    vkDestroyBuffer(device_, stagingBuffer, nullptr);
+    vkFreeMemory(device_, stagingBufferMemory, nullptr);
+  }
+
+  /**
    * Copy data between buffers
    */
   void copyBuffer (const VkBuffer& srcBuffer,
@@ -978,8 +1007,9 @@ private:
         VkBuffer vertexBuffers[] = {vertexBuffer_};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffers_[i], 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(commandBuffers_[i], indexBuffer_, 0, VK_INDEX_TYPE_UINT16);
 
-        vkCmdDraw(commandBuffers_[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+        vkCmdDrawIndexed(commandBuffers_[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
       }
 
       // TODO assuming we have triangle strips, points and line strips etc, I wonder

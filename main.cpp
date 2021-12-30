@@ -1161,6 +1161,7 @@ private:
   }
 
   bool checkDeviceExtensionSupport (VkPhysicalDevice device) {
+    std::cout << "checkDeviceExtensionSupport()\n";
     uint32_t extensionCount;
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
     std::vector<VkExtensionProperties> availableExtensions(extensionCount);
@@ -1169,7 +1170,8 @@ private:
     std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
     for (const auto& extension : availableExtensions) {
-        requiredExtensions.erase(extension.extensionName);
+      std::cout << " " << extension.extensionName << "\n";
+      requiredExtensions.erase(extension.extensionName);
     }
 
     return requiredExtensions.empty();

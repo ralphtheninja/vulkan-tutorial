@@ -199,9 +199,40 @@ private:
   bool frameBufferResized_ = false;
 
   void initWindow () {
+    std::cout << "initWindow()\n";
+
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     window_ = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+
+    // Some window statistics for the primary monitor (can we detect that the
+    // window is moved to another window with another resolution and other settings?)
+    GLFWmonitor* primary = glfwGetPrimaryMonitor();
+    if (primary) {
+      // Note that we can also enumerate _all_ monitors by glfwGetMonitors() and
+      // calculate PPI for each of them.
+      const GLFWvidmode* mode = glfwGetVideoMode(primary);
+      if (mode) {
+        std::cout << " primary monitor resolution width: " << mode->width << "\n";
+        std::cout << " primary monitor resolution height: " << mode->height << "\n";
+
+        int width_mm, height_mm;
+        glfwGetMonitorPhysicalSize(primary, &width_mm, &height_mm);
+        std::cout << " primary monitor width in mm: " << width_mm << "\n";
+        std::cout << " primary monitor height in mm: " << height_mm << "\n";
+
+        const double width_inch = width_mm / 25.4;
+        const double height_inch = height_mm / 25.4;
+        std::cout << " primary monitor width in inches: " << width_inch << "\n";
+        std::cout << " primary monitor height in inches: " << height_inch << "\n";
+
+        const double d = sqrt(width_inch * width_inch + height_inch * height_inch);
+        std::cout << " primary monitor diagonal in inches: " << d << "\n";
+        const double ppi = sqrt(mode->width * mode->width + mode->height * mode->height) / d;
+        std::cout << " primary monitor PPI: " << ppi << "\n";
+      }
+    }
+
     glfwSetWindowUserPointer(window_, this);
     glfwSetFramebufferSizeCallback(window_, frameBufferResizeCallback);
   }
